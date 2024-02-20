@@ -1,62 +1,37 @@
+import { getDb } from "./db.js";
+
 export async function criarTransacao(request, reply) {
   const { idUsuario } = request.params;
   if (idUsuario < 1 || idUsuario > 5) return reply.status(404).send();
 
-  //   const dadosCliente = await
-
   const { valor, tipo, descricao } = request.body;
 
-  return reply.status(200).send({ valor, tipo, descricao });
-}
+  const db = getDb();
 
-const { MongoClient } = require("mongodb");
+  const cliente = await db.findOne({ idCliente: idUsuario });
 
-async function createTransaction(newTransaction) {
-  const client = new MongoClient("mongodb://localhost:27017", {
-    useUnifiedTopology: true,
-  });
+  let novaTransacao = {
+    tipo: tipo,
+    valor: valor,
+    descricao: descricao,
+    realizada_em: new Date(),
+  };
 
-  try {
-    await client.connect();
-
-    const transactionsCollection = client
-      .db("yourDB")
-      .collection("transactions");
-
-    // Find the last transaction for the client and increment the saldo atomically
-    const result = await transactionsCollection.findAndModify(
-      { idCliente: newTransaction.idCliente },
-      [["_id", "desc"]],
-      { $inc: { saldo: newTransaction.valor } },
-      { new: true }
-    );
-
-    if (result.value) {
-      // If a document was found and updated, return the new saldo
-      return result.value.saldo;
-    } else {
-      // If no document was found, this is the first transaction for the client
-      // Insert a new document with the initial saldo equal to the valor of the transaction
-      newTransaction.saldo = newTransaction.valor;
-      await transactionsCollection.insertOne(newTransaction);
-      return newTransaction.saldo;
-    }
-  } catch (error) {
-    console.error("Error processing transaction", error);
-    throw error;
-  } finally {
-    await client.close();
+  let novoSaldo = 0;
+  if (novaTransacao.tipo == "c") {
+    novoSaldo = cliente.saldo + novaTransacao.valor;
+  } else {
+    novoSaldo = cliente.saldo - novaTransacao.valor;
+    if (novoSaldo < cliente.limite * -1) return reply.status(422).send();
   }
-}
 
-/*
-// limite fixo
-{
-    idCliente: int,
-    valor: int,
-    saldo: int,
-    tipo: char,
-    descricao: string,
-    data: string
+  await db.updateOne(
+    { idCliente: idUsuario },
+    {
+      $set: { saldo: novoSaldo },
+      $push: { ultimas_transacoes: novaTransacao },
+    }
+  );
+
+  return reply.status(200).send({ limite: cliente.limite, saldo: novoSaldo });
 }
-*/
