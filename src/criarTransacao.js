@@ -34,13 +34,21 @@ export async function criarTransacao(request, reply) {
 
   const release = await mutex.acquire();
 
-  let cliente = await db.findOneAndUpdate(
+  
+  const valorInc = tipo == 'd' ? -valor : valor;
+
+  const cliente = await db.findOneAndUpdate(
     {
       idCliente,
-      $expr: { $gte: ["$saldo", { $multiply: ["$limite", -1] }] },
+      $expr: { 
+        $gte: [
+          { $add: ["$saldo", valorInc] }, 
+          { $multiply: ["$limite", -1] }
+        ] 
+      },
     },
     {
-      $inc: { saldo: -valor },
+      $inc: { saldo: valorInc },
       $push: { ultimas_transacoes: novaTransacao },
     },
     {
@@ -50,7 +58,9 @@ export async function criarTransacao(request, reply) {
   );
 
   release();
-  console.log({ cliente });
+
+  if(cliente == null)
+    return reply.status(422).send();
 
   return reply
     .status(200)

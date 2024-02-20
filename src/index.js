@@ -16,7 +16,9 @@ fastify.get("/clientes/:idCliente/extrato", async (request, reply) => {
   const db = getDb();
   const idCliente = request.params.idCliente;
   if (idCliente < 1 || idCliente > 5) return reply.status(404).send();
+
   const result = await db.findOne({ idCliente: parseInt(idCliente) });
+  
   const sortedTransactions = result.ultimas_transacoes.sort(
     (a, b) => b.realizada_em - a.realizada_em
   );
