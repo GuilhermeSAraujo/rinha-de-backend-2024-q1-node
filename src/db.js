@@ -5,12 +5,18 @@ const url = "mongodb://rinha:123@mongo:27017";
 let _db;
 
 export async function connectToServer() {
-  try {
-    const client = await MongoClient.connect(url);
-    _db = client.db("rinha").collection("transacoes");
-    // _db.findOne();
-  } catch (err) {
-    console.error(err);
+  let connected = false;
+  while (!connected) {
+    try {
+      console.log("Trying to stablish connection with db...");
+      const client = await MongoClient.connect(url);
+      _db = client.db("rinha").collection("transacoes");
+      connected = true;
+      console.log("Connected succefully...");
+    } catch (err) {
+      console.log("Waiting for database connection...");
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
   }
 }
 

@@ -3,35 +3,13 @@ import { criarTransacao } from "./criarTransacao.js";
 import { connectToServer, getDb } from "./db.js";
 
 const fastify = Fastify({
-  logger: true,
+  // logger: true,
   // forceCloseConnections: true,
   // maxParamLength: 1,
 });
 
-fastify.route({
-  method: "POST",
-  url: "/clientes/:idUsuario/transacoes",
-  schema: {
-    params: {
-      type: "object",
-      required: ["idUsuario"],
-      properties: {
-        idUsuario: { type: "integer" },
-      },
-    },
-    body: {
-      type: "object",
-      required: ["valor", "tipo", "descricao"],
-      properties: {
-        valor: { type: "integer" },
-        tipo: { type: "string", enum: ["c", "d"] },
-        descricao: { type: "string", maxLength: 10 },
-      },
-    },
-  },
-  handler: async function (request, reply) {
-    return await criarTransacao(request, reply);
-  },
+fastify.post("/clientes/:id/transacoes", async (request, reply) => {
+  await criarTransacao(request, reply);
 });
 
 fastify.get("/clientes/:idCliente/extrato", async (request, reply) => {
@@ -70,7 +48,7 @@ const start = async () => {
   try {
     await connectToServer();
     await fastify.listen({ port: 8080, host: "0.0.0.0" });
-    console.info("Server is ready!");
+    fastify.log.info("Server is ready!");
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

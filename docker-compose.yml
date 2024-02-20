@@ -2,6 +2,7 @@ version: "3.5"
 
 services:
   mongo:
+    container_name: mongo
     image: mongo:7.0.5-jammy
     command: mongod --quiet --logpath /dev/null
     restart: always
@@ -15,8 +16,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.7"
-          memory: "400MB"
+          cpus: "0.5"
+          memory: "350MB"
   api01:
     container_name: api01
     build: .
@@ -28,11 +29,16 @@ services:
       - "8080"
     depends_on:
       - mongo
+    ulimits:
+      nproc: 1000000
+      nofile:
+        soft: 1000000
+        hard: 1000000
     deploy:
       resources:
         limits:
-          cpus: "0.2"
-          memory: "35MB"
+          cpus: "0.4"
+          memory: "50MB"
   api02:
     container_name: api02
     build: .
@@ -44,11 +50,16 @@ services:
       - "8080"
     depends_on:
       - mongo
+    ulimits:
+      nproc: 1000000
+      nofile:
+        soft: 1000000
+        hard: 1000000
     deploy:
       resources:
         limits:
-          cpus: "0.2"
-          memory: "35MB"
+          cpus: "0.4"
+          memory: "50MB"
   nginx:
     image: nginx:latest
     volumes:
@@ -61,8 +72,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"
-          memory: "70MB"
+          cpus: "0.2"
+          memory: "60MB"
 networks:
   default:
     driver: bridge

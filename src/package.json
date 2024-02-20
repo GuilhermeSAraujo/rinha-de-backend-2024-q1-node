@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "async-mutex": "^0.4.1",
     "fastify": "^4.26.1",
     "mongodb": "^6.3.0"
   }
